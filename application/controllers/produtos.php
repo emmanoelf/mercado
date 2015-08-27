@@ -1,12 +1,32 @@
 <?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
 class Produtos extends CI_Controller{
 	
 	public function index(){
-		$produtos = array();
-		$bola = array("nome" => "Bola de Futebol", "descricao" => "Bola de futebol assinada pelo Zico", "preco" =>300);
-		$hd = array("nome" => "HD Externo usado", "descricao" =>"Marca Mega HD 300 Teras, comprado em 1997", "preco" => 400);
-		array_push($produtos, $bola, $hd);
+		$this->load->model("produtos_model");
+		$produtos = $this->produtos_model->buscaTodos();
 		$dados = array("produtos" => $produtos);
+		$this->load->helper(array("currency"));
 		$this->load->view("produtos/index.php", $dados);
 	}
+	
+	public function formulario(){
+		$this->load->view("produtos/formulario");
+	}
+	
+	public function novo(){
+		$usuarioLogado = $this->session->userdata("usuario_logado");
+		$produto = array(
+			"nome" => $this->input->post("nome"),
+			"descricao" => $this->input->post("descricao"),
+			"preco" => $this->input->post("preco"),
+			"usuario_id" => $usuarioLogado["id"]
+		);
+		$this->load->model("produtos_model");
+		$this->produtos_model->salva($produto);
+		$this->session->set_flashdata("success", "Produto salvo com sucesso");
+		redirect("/");
+	}
+	
 }

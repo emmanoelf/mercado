@@ -8,15 +8,23 @@ class Produtos extends CI_Controller{
 		$produtos = $this->produtos_model->buscaTodos();
 		$dados = array("produtos" => $produtos);
 		$this->load->helper(array("currency"));
-		$this->load->view("produtos/index.php", $dados);
+		$this->load->template("produtos/index.php", $dados);
 	}
 	
 	public function formulario(){
-		$this->load->view("produtos/formulario");
+		autoriza();
+		$this->load->template("produtos/formulario");
 	}
 	
 	public function novo(){
-		$usuarioLogado = $this->session->userdata("usuario_logado");
+		$usuarioLogado = autoriza();
+		$this->load->library("form_validation");
+		$this->form_validation->set_rules("nome",  "nome", "required|min_length[5]|callback_nao_tenha_a_palavra_melhor");
+		$this->form_validation->set_rules("preco", "preco", "required");
+		$this->form_validation->set_rules("descricao", "descricao","trim|required|min_length[10]");
+		$this->form_validation->set_error_delimiters("<p class='alert alert-danger'>","</p>");
+		$sucesso = $this->form_validation->run();
+		if($sucesso){
 		$produto = array(
 			"nome" => $this->input->post("nome"),
 			"descricao" => $this->input->post("descricao"),
@@ -27,6 +35,27 @@ class Produtos extends CI_Controller{
 		$this->produtos_model->salva($produto);
 		$this->session->set_flashdata("success", "Produto salvo com sucesso");
 		redirect("/");
+		}else{
+			$this->load->template("produtos/formulario");
+		}
+	}
+	
+	public function mostra($id){
+		$this->load->model("produtos_model");
+		$produto = $this->produtos_model->busca($id);
+		$dados = array("produto" => $produto);
+		$this->load->helper("typography");
+		$this->load->template("produtos/mostra", $dados);
+	}
+	
+	public function nao_tenha_a_palavra_melhor($nome){
+		$posicao = strpos($nome, "melhor");
+		if($posicao != FALSE){
+			return TRUE;
+		}else{
+			$this->form_validation->set_message("nao_tenha_a_palavra_melhor", "O campo '%s' não pode conter a palavra 'melhor'");
+			return FALSE;
+		}
 	}
 	
 }
